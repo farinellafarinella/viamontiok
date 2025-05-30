@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Controlli Giornalieri - Campioni</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 1.5rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+    }
+    .section {
+      display: none;
+      background-color: #1e1e1e;
+      padding: 2rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 700px;
+      text-align: center;
+    }
+    .visible {
+      display: block !important;
+    }
+    button {
+      margin: 1rem;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 10px;
+      background-color: #ffffff;
+      color: #000000;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    input, textarea {
+      width: 100%;
+      background-color: #2a2a2a;
+      color: #ffffff;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Controlli Giornalieri</h1>
+
+  <div id="login" class="section visible">
+    <p>Inserisci il tuo nome per iniziare:</p>
+    <input type="text" id="operatorName" placeholder="Nome operatore">
+    <button onclick="checkName()">Avanti</button>
+  </div>
+
+  <div id="postazione" class="section">
+    <p>In quale postazione lavori?</p>
+    <button onclick="startChecklist('stampanti')">Stampanti</button>
+    <button onclick="startChecklist('imballo')">Imballo</button>
+    <button onclick="startChecklist('rettilinea')">Rettilinea</button>
+    <button onclick="startChecklist('waterjet')">Waterjet</button>
+    <button onclick="startChecklist('forno')">Forno</button>
+  </div>
+
+  <div id="stampantiActions" class="section">
+    <button onclick="openOrderHelp()">Aiutami ad ordinare</button>
+    <button onclick="openMaterialInput()">Materiale mancante</button>
+    <button onclick="sendStampantiEmail()">Invia lista</button>
+  </div>
+
+  <div id="orderHelp" class="section">
+    <p>Cosa devi ordinare?</p>
+    <button onclick="showOrderType('bobine')">Bobine</button>
+    <button onclick="showOrderType('inchiostri')">Inchiostri</button>
+    <button onclick="showOrderType('tubi')">Tubi Katana</button>
+    <div id="orderForm"></div>
+    <button onclick="closeOrderHelp()">Chiudi</button>
+  </div>
+
+  <div id="materialInput" class="section">
+    <p>Inserisci il materiale mancante:</p>
+    <textarea id="materialText" rows="5" placeholder="Scrivi qui il materiale mancante..."></textarea>
+    <button onclick="addToMaterialList()">Aggiungi alla lista</button>
+    <button onclick="closeMaterialInput()">Chiudi</button>
+    <ul id="materialList"></ul>
+  </div>
+
+  <div id="imballoActions" class="section">
+    <ol>
+      <li>Controllare la buchetta due volte al giorno</li>
+      <li>Verificare per ogni ordine disponibilità dei campioni (uno alla volta)</li>
+      <li>Quando l'ordine è completo si chiude ed è finito, assicurarsi che nessun foglio rimanga in giro</li>
+      <li>Quando manca qualcosa: segnare cosa manca, imballare e sistemare su un bancalino i campioni trovati e attaccarci l'ordine</li>
+      <li>Controllare con Alex (addetto al taglio dei campioni) e fornire la lista dei decori mancanti a Giovanni (ordina i campioni)</li>
+    </ol>
+    <button onclick="openImballoMissingInput()">Campioni mancanti</button>
+    <button onclick="sendImballoEmail()">Invia lista</button>
+  </div>
+
+  <div id="imballoInput" class="section">
+    <p>Inserisci il riferimento d'ordine:</p>
+    <input type="text" id="orderRef" placeholder="Es. 12345-AB">
+    <p>Inserisci i campioni mancanti:</p>
+    <textarea id="imballoText" rows="5" placeholder="Scrivi qui i campioni mancanti..."></textarea>
+    <button onclick="addToImballoList()">Aggiungi alla lista</button>
+    <button onclick="closeImballoInput()">Chiudi</button>
+    <ul id="imballoList"></ul>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      window.checkName = function() {
+        const name = document.getElementById('operatorName').value.trim().toLowerCase();
+        if (name === 'andy' || name === 'mattia') {
+          document.getElementById('login').classList.remove('visible');
+          document.getElementById('postazione').classList.add('visible');
+        } else {
+          alert('Nome non autorizzato');
+        }
+      }
+
+      window.startChecklist = function(station) {
+        document.getElementById('postazione').classList.remove('visible');
+        if (station === 'imballo') {
+          document.getElementById('imballoActions').classList.add('visible');
+        } else if (station === 'stampanti') {
+          document.getElementById('stampantiActions').classList.add('visible');
+        }
+      }
+
+      window.openImballoMissingInput = function() {
+        document.getElementById('imballoInput').classList.add('visible');
+      }
+
+      window.closeImballoInput = function() {
+        document.getElementById('imballoInput').classList.remove('visible');
+      }
+
+      window.addToImballoList = function() {
+        const ref = document.getElementById('orderRef').value;
+        const text = document.getElementById('imballoText').value;
+        const ul = document.getElementById('imballoList');
+        const li = document.createElement('li');
+        li.textContent = `Ordine: ${ref} - Campioni: ${text}`;
+        ul.appendChild(li);
+        document.getElementById('orderRef').value = '';
+        document.getElementById('imballoText').value = '';
+      }
+
+      window.openMaterialInput = function() {
+        document.getElementById('materialInput').classList.add('visible');
+      }
+
+      window.closeMaterialInput = function() {
+        document.getElementById('materialInput').classList.remove('visible');
+      }
+
+      window.addToMaterialList = function() {
+        const text = document.getElementById('materialText').value;
+        const ul = document.getElementById('materialList');
+        const li = document.createElement('li');
+        li.textContent = `Materiale mancante: ${text}`;
+        ul.appendChild(li);
+        document.getElementById('materialText').value = '';
+      }
+
+      window.openOrderHelp = function() {
+        document.getElementById('orderHelp').classList.add('visible');
+      }
+
+      window.closeOrderHelp = function() {
+        document.getElementById('orderHelp').classList.remove('visible');
+        document.getElementById('orderForm').innerHTML = '';
+      }
+
+      window.showOrderType = function(type) {
+        const container = document.getElementById('orderForm');
+        container.innerHTML = '';
+        if (type === 'bobine') {
+          container.innerHTML = `
+            <p>Quanti m² devi stampare?</p>
+            <input id="mq" type="number" placeholder="Metri quadrati">
+            <button onclick="calculateBobine()">Calcola</button>
+            <p id="bobineResult"></p>
+          `;
+        } else if (type === 'inchiostri') {
+          container.innerHTML = `
+            <p>Quanti inchiostri LUS170?</p>
+            <input id="lus" type="number">
+            <p>Quanti inchiostri LH100?</p>
+            <input id="lh" type="number">
+            <button onclick="calculateInchiostri()">Calcola</button>
+            <p id="inchiostroResult"></p>
+          `;
+        } else if (type === 'tubi') {
+          container.innerHTML = `
+            <p>Quanti tubi da 350mm?</p>
+            <input id="t350" type="number">
+            <p>Quanti tubi da 600mm?</p>
+            <input id="t600" type="number">
+            <button onclick="calculateTubi()">Calcola</button>
+            <p id="tubiResult"></p>
+          `;
+        }
+      }
+
+      window.calculateBobine = function() {
+        const mq = parseFloat(document.getElementById('mq').value);
+        const totale = mq * 2 + 9;
+        const costo = Math.ceil(totale / 45.6) * 167.5;
+        document.getElementById('bobineResult').textContent = `Devi ordinare ${Math.ceil(totale / 45.6)} bobine. Costo totale: €${costo.toFixed(2)}`;
+      }
+
+      window.calculateInchiostri = function() {
+        const lus = parseInt(document.getElementById('lus').value);
+        const lh = parseInt(document.getElementById('lh').value);
+        const totale = (lus * 130) + (lh * 150);
+        document.getElementById('inchiostroResult').textContent = `Costo totale inchiostri: €${totale.toFixed(2)}`;
+      }
+
+      window.calculateTubi = function() {
+        const t350 = parseInt(document.getElementById('t350').value);
+        const t600 = parseInt(document.getElementById('t600').value);
+        const costoTubi = (t350 * 8.5) + (t600 * 12.5);
+        const costoTrattamento = (t350 + t600) * 14;
+        const trasporto = 100;
+        const totale = costoTubi + costoTrattamento + trasporto;
+        document.getElementById('tubiResult').textContent = `Costo tubi: €${costoTubi.toFixed(2)}, trattamento: €${costoTrattamento.toFixed(2)}, trasporti: €100. Totale: €${totale.toFixed(2)}`;
+      }
+
+      window.sendStampantiEmail = function() {
+        alert("Funzione invio email in sviluppo. Copia manualmente la lista per ora.");
+      }
+
+      window.sendImballoEmail = function() {
+        alert("Funzione invio email in sviluppo. Copia manualmente la lista per ora.");
+      }
+    });
+  </script>
+</body>
+</html>
